@@ -1,0 +1,105 @@
+---
+title: "Exploratory Data Analysis"
+author: "Heber Trujillo"
+date: "September 12, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Set Up
+
+```{r include=FALSE}
+library(dplyr)
+library(ggplot2)
+
+```
+```{r}
+
+train<-read.csv("C:/DISCO D/Bienvenu/Voitures/Individuel/PT/Hackathon/Prework/Mandatory/Data/train.csv")
+```
+## One Way Analysis
+
+### MSSubClass: Identifies the type of dwelling involved in the sale
+
+```{r}
+
+MSSubClass<-train%>%
+  group_by(MSSubClass)%>%
+  summarise(count=n(),Avg_SalePrice=mean(SalePrice))
+
+
+p <- ggplot(data=MSSubClass, aes(x =MSSubClass,y=Avg_SalePrice/500, group=1, label=round(Avg_SalePrice/500,digits = 2))) + 
+  geom_col(aes(y = count),fill = "#FFCC00")
+p<-p+geom_line( linetype="dashed", size=1,colour ="#0066CC",aes(y=Avg_SalePrice/500))
+p <- p + scale_y_continuous(sec.axis = sec_axis(~.*(500), name = "Average Price"))
+p <- p + labs(y = "# Observations",
+              x = "MSSubClass")
+p
+```
+
+Seems to There is a clear difference in the average sales price among the MSSubClass's levels
+
+
+### MSZoning: Identifies the general zoning classification of the sale.
+
+```{r}
+MSZoning<-train%>%
+  group_by(MSZoning)%>%
+  summarise(count=n(),Avg_SalePrice=mean(SalePrice))
+
+
+p_1 <- ggplot(data=MSZoning, aes(x =MSZoning,y=Avg_SalePrice/500, group=1, label=round(Avg_SalePrice/500,digits = 2))) + 
+  geom_col(aes(y = count),fill = "#FFCC00")+ geom_line( linetype="dashed", size=1,colour ="#0066CC",aes(y=Avg_SalePrice/500)) + scale_y_continuous(sec.axis = sec_axis(~.*(500), name = "Average Price")) + labs(y = "# Observations",
+              x = "MSZoning")
+p_1
+
+```
+
+### LotFrontage: Linear feet of street connected to property
+
+```{r}
+p_2 <- ggplot(train, aes(LotFrontage, SalePrice)) + geom_point()+geom_smooth(method = "lm", formula = y ~ splines::bs(x, 3))
+p_2
+
+```
+
+  There is a trend for until 100, will be worthy to test it as an explanatory variable. 
+
+### LotArea: Lot size in square feet
+
+```{r}
+
+
+p_3 <- ggplot(train, aes(LotArea, SalePrice)) + geom_point()+geom_smooth(method = "lm", formula = y ~ splines::bs(x, 3))
+p_3
+
+```
+
+Very interesting trend to test
+
+
+### LandContour: Flatness of the property
+
+```{r}
+
+
+LandContour<-train%>%
+  group_by(LandContour)%>%
+  summarise(count=n(),Avg_SalePrice=mean(SalePrice))
+
+
+p_4 <- ggplot(data=LandContour, aes(x =LandContour,y=Avg_SalePrice/500, group=1, label=round(Avg_SalePrice/500,digits = 2))) + 
+  geom_col(aes(y = count),fill = "#FFCC00")+ geom_line( linetype="dashed", size=1,colour ="#0066CC",aes(y=Avg_SalePrice/500)) + scale_y_continuous(sec.axis = sec_axis(~.*(500), name = "Average Price")) + labs(y = "# Observations",
+              x = "LandContour")
+p_4
+
+
+
+```
+
+
+
+
