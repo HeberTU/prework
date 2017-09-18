@@ -1,0 +1,109 @@
+---
+title: "Model Fitting"
+author: "Heber Trujillo"
+date: "September 14, 2017"
+output: html_document
+---
+## Set - Up
+
+```{r include=FALSE}
+library(gbm)
+library(axaml)
+library(ggplot2)
+library(dplyr)
+setwd("C:/DISCO D/Bienvenu/Voitures/Individuel/PT/Hackathon/Prework/Mandatory/Data")
+```
+
+```{r}
+train<-read.csv("C:/DISCO D/Bienvenu/Voitures/Individuel/PT/Hackathon/Prework/Mandatory/Data/train.csv")
+test<-read.csv("C:/DISCO D/Bienvenu/Voitures/Individuel/PT/Hackathon/Prework/Mandatory/Data/test.csv")
+
+```
+
+## Fitting
+
+
+```{r}
+
+param <- c(481, 10, 0.01)
+select<-names(train)
+select<-select[2:80]
+
+response<-train$SalePrice
+
+model<-gbm(response~.,data=train[,select], n.trees = param[1], interaction.depth = param[2], shrinkage = param[3],verbose=T)
+
+
+```
+
+
+## Goodness of Fit
+
+
+```{r}
+
+
+GBM_train<-predict(model,train, n.trees=param[1], type = "response")
+train<-data.frame(train,GBM_train)
+
+
+GBM_test<-predict(model,test, n.trees=param[1], type = "response")
+test<-data.frame(test,GBM_test)
+
+kpi_gini(train$GBM_train, truerisk =train$SalePrice)
+kpi_gini(test$GBM_test, truerisk =test$SalePrice)
+
+```
+
+Since the overfitting is a very common problem during the fitting process, I have performed the Gini test in order to discard that problem. Here both, train and test have practically the same Gini coefficient.
+
+## Alalysis
+
+```{r, include=FALSE}
+
+factors<-cbind(summary(model)[1],summary(model)[2])
+factors<-factors[1:5,]
+
+```
+
+In order to figure out which factors are more relevant predicting the sales price, we are going to use the *summary* function over the model
+```{r}
+
+p<-ggplot(data=factors, aes(x=reorder(var,rel.inf), y=rel.inf)) +
+  geom_bar(stat="identity",fill = "blue")+ coord_flip()+xlab(label="Factors")+ylab(label="Relative Influence")
+p
+
+
+```
+
+The top 5 factors that make a difference in sales price are:
+
+1. OverallQual:Overall material and finish quality,
+2. GrLivArea:Above grade (ground) living area square feet,
+3. Neighborhood:Physical locations within Ames city limits,
+4. TotalBsmtSF:Total square feet of basement area,
+5. BsmtFinSF1:Type 1 finished square feet.
+
+Next, I would like to see the interaction impact between OverallQual and Neighborhood 
+
+```{r}
+
+plot.gbm(model,i.var = c("OverallQual","Neighborhood"),type="response")
+
+```
+
+
+As I expected, all neighborhoods have the same trend.
+
+## Expor Predictions
+
+```{r}
+
+submission<-test%>%
+  select(Id,GBM_test)
+
+submission<-rename(submission,SalePrice=GBM_test)
+
+write.csv(submission,"C:/DISCO D/Bienvenu/Voitures/Individuel/PT/Hackathon/Prework/Mandatory/Data/submission_HTU.CSV",row.names = FALSE)
+
+```
